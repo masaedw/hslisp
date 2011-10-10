@@ -22,7 +22,16 @@ x = iterParser exprs
 readSExp :: SExp -> LObject
 readSExp (Symbol symbol) = LSymbol symbol
 readSExp (Number num) = LNumber num
+readSExp (List []) = LNil
 readSExp (List ss) = LList $ Prelude.map readSExp ss
+
+eval :: Context -> LObject -> (Context, LObject)
+eval ctx e@(LNumber _) = (ctx, e)
+eval ctx (LSymbol name) = (ctx, ctx Map.! name)
+eval ctx (LList ((LSymbol name):[])) = (ctx, ctx Map.! name)
+eval ctx e@(LList []) = (ctx, e)
+
+
 
 main :: IO ()
 main = do
