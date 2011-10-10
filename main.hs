@@ -21,4 +21,3 @@ main = do
   -- E.run_ $ file $$ EL.mapM_ $ BS.putStrLn
   hoge <- E.run_ $ file $$ x
   Prelude.mapM_ print hoge
-  return ()
