@@ -8,10 +8,7 @@ import Data.Word
 import Monad
 import qualified Data.Attoparsec.Char8 as C8
 
-data SExp = Symbol ByteString
-          | Number Int
-          | List [SExp]
-            deriving Show
+import LispData
 
 exprs :: Parser [SExp]
 exprs = sexp `sepBy` many spaces
