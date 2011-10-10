@@ -14,5 +14,13 @@ data LObject = LSymbol BS.ByteString
              | LNumber Int
              | LList [LObject]
              | LFunc (Context -> [LObject] -> LObject)
-             | LSpecial (Context -> [LObject] -> (Context, LObject))
+             | LSpecial String (Context -> [LObject] -> (Context, LObject))
              | LNil
+
+instance Show LObject where
+    show (LSymbol s) = "LSymbol " ++ show s
+    show (LList os) = "LList " ++ show os
+    show (LNumber n) = "LNumber " ++ show n
+    show (LFunc _) = "LFunc ..."
+    show (LSpecial name _) = "LSpecial " ++ name
+    show (LNil) = "LNil"
