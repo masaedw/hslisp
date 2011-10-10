@@ -13,7 +13,7 @@ type Context = Map.Map BS.ByteString LObject
 data LObject = LSymbol BS.ByteString
              | LNumber Int
              | LList [LObject]
-             | LFunc (Context -> [LObject] -> LObject)
+             | LFunc ([LObject] -> LObject)
              | LSpecial String (Context -> [LObject] -> (Context, LObject))
              | LNil
 

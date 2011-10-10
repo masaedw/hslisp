@@ -31,7 +31,11 @@ eval ctx (LSymbol name) = (ctx, ctx Map.! name)
 eval ctx (LList ((LSymbol name):[])) = (ctx, ctx Map.! name)
 eval ctx e@(LList []) = (ctx, e)
 
+lfunc :: ([LObject] -> LObject) -> LObject
+lfunc f = LFunc f
 
+initCtx :: Context
+initCtx = Map.fromList
 
 main :: IO ()
 main = do
