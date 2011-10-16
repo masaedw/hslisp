@@ -12,9 +12,6 @@ import IO
 import System
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as BSC
-import qualified Data.Enumerator as E
-import qualified Data.Enumerator.Binary as EB
-import qualified Data.Enumerator.List as EL
 import qualified Data.Map as Map
 
 import Parse
