@@ -5,11 +5,13 @@ module Main where
 import Control.Monad.IO.Class (liftIO)
 import Data.Attoparsec.Enumerator
 import Data.Enumerator (($$), (<==<), ($=), (=$))
-import Data.Enumerator.Binary as EB
-import System
+import Data.Maybe (isJust, fromJust)
 import IO
+import System
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Char8 as BSC
 import qualified Data.Enumerator as E
+import qualified Data.Enumerator.Binary as EB
 import qualified Data.Enumerator.List as EL
 import qualified Data.Map as Map
 
@@ -31,11 +33,40 @@ eval ctx (LSymbol name) = (ctx, ctx Map.! name)
 eval ctx (LList ((LSymbol name):[])) = (ctx, ctx Map.! name)
 eval ctx e@(LList []) = (ctx, e)
 
-lfunc :: ([LObject] -> LObject) -> LObject
-lfunc f = LFunc f
+lfunc :: String -> Subr -> LObject
+lfunc name f = LFunc name f
+
+lplus :: Subr
+lplus [] = Right $ LNumber 0
+lplus os =
+    if all isJust nums then
+        Right $ LNumber $ foldr (+) 0 $ map fromJust nums
+    else
+        Left "applied not number"
+    where
+      nums :: [Maybe Int]
+      nums = map getNumber os
+
+lminus :: Subr
+lminus [(LNumber i)] = Right $ LNumber $ -i
+lminus os =
+    if all isJust nums then
+        Right $ LNumber $ foldl1 (-) $ map fromJust nums
+    else
+        Left "applied not number"
+    where
+      nums :: [Maybe Int]
+      nums = map getNumber os
 
 initCtx :: Context
-initCtx = Map.fromList
+initCtx = Map.fromList $
+          map f
+          [ ("+", lplus)
+          , ("-", lminus)
+          ]
+    where
+      f :: (String, Subr) -> (BS.ByteString, LObject)
+      f (n, s) = (BSC.pack n, lfunc n s)
 
 main :: IO ()
 main = do
