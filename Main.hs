@@ -20,15 +20,6 @@ import qualified Data.Map as Map
 import Parse
 import LispData
 
-x :: Monad m => E.Iteratee BS.ByteString m [SExp]
-x = iterParser exprs
-
-readSExp :: SExp -> LObject
-readSExp (Symbol symbol) = LSymbol symbol
-readSExp (Number num) = LNumber num
-readSExp (List []) = LNil
-readSExp (List ss) = LList $ Prelude.map readSExp ss
-
 eval :: Context -> LObject -> (Context, LObject)
 eval ctx e@(LNumber _) = (ctx, e)
 eval ctx (LSymbol name) = (ctx, ctx Map.! name)
@@ -81,14 +72,30 @@ initCtx = Map.fromList $
       f :: (String, Subr) -> (BS.ByteString, LObject)
       f (n, s) = (BSC.pack n, lfunc n s)
 
+--
+-- Lisp 処理系は概念としては
+--              read            eval             print
+--    Stirng     →  [LObject]   →   [LObject]   →    IO ()
+-- ソースコード      シンボル列       実行結果          印字
+--
+-- という構造になると思う
+--
+
+readSExp :: SExp -> LObject
+readSExp (Symbol symbol) = LSymbol symbol
+readSExp (Number num) = LNumber num
+readSExp (List []) = LNil
+readSExp (List ss) = LList $ Prelude.map readSExp ss
+
+readLisp :: String -> [LObject]
+readLisp = map readSExp . parseLisp
+
 main :: IO ()
 main = do
   args <- getArgs
-  let file = if length args > 0
-             then EB.enumFile $ Prelude.head args
-             else EB.enumHandle 100 stdin
-  -- E.run_ $ file $$ EL.mapM_ $ BS.putStrLn
-  hoge <- E.run_ $ file $$ x
-  forM_ (map readSExp hoge) $ \sexp -> do
-         let (ctx, result) = eval initCtx sexp
+  let file = head args
+  src <- readFile file
+  forM_ (values src) $ \result -> do
          print result
+  where
+    values = snd . mapAccumL eval initCtx . readLisp
