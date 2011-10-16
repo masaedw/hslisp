@@ -2,10 +2,12 @@
 
 module Main where
 
+import Control.Monad (forM_)
 import Control.Monad.IO.Class (liftIO)
 import Data.Attoparsec.Enumerator
 import Data.Enumerator (($$), (<==<), ($=), (=$))
 import Data.Maybe (isJust, fromJust)
+import Data.List (mapAccumL)
 import IO
 import System
 import qualified Data.ByteString as BS
@@ -31,7 +33,18 @@ eval :: Context -> LObject -> (Context, LObject)
 eval ctx e@(LNumber _) = (ctx, e)
 eval ctx (LSymbol name) = (ctx, ctx Map.! name)
 eval ctx (LList ((LSymbol name):[])) = (ctx, ctx Map.! name)
+eval ctx (LList ((LSymbol name):xs)) =
+    (ctx', lapply f vs)
+    where
+      (ctx', vs) = mapAccumL eval ctx xs
+      f = ctx' Map.! name
 eval ctx e@(LList []) = (ctx, e)
+
+lapply :: LObject -> [LObject] -> LObject
+lapply (LFunc name f) os =
+    case f os of
+      Right x -> x
+      Left x -> error x
 
 lfunc :: String -> Subr -> LObject
 lfunc name f = LFunc name f
@@ -76,4 +89,6 @@ main = do
              else EB.enumHandle 100 stdin
   -- E.run_ $ file $$ EL.mapM_ $ BS.putStrLn
   hoge <- E.run_ $ file $$ x
-  Prelude.mapM_ print hoge
+  forM_ (map readSExp hoge) $ \sexp -> do
+         let (ctx, result) = eval initCtx sexp
+         print result
